@@ -34,6 +34,7 @@
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
+#include <LittleFS.h>
 #else
 #error Platform not supported
 #endif

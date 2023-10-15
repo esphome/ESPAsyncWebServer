@@ -236,6 +236,10 @@ void AsyncEventSourceClient::send(const char *message, const char *event, uint32
 }
 
 void AsyncEventSourceClient::_runQueue(){
+  if(!this->_messageQueue_mutex.try_lock()) {
+    return;
+  }
+
   while(!_messageQueue.isEmpty() && _messageQueue.front()->finished()){
     _messageQueue.remove(_messageQueue.front());
   }
@@ -245,6 +249,7 @@ void AsyncEventSourceClient::_runQueue(){
     if(!(*i)->sent())
       (*i)->send(_client);
   }
+  this->_messageQueue_mutex.unlock();
 }
 
 

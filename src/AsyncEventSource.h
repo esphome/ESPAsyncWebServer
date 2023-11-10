@@ -28,7 +28,9 @@
 #include <ESPAsyncTCP.h>
 #endif
 
+#if defined(ESP32)
 #include <mutex>
+#endif // ESP32
 
 #ifndef SSE_MAX_QUEUED_MESSAGES
 #define SSE_MAX_QUEUED_MESSAGES 32
@@ -77,7 +79,11 @@ class AsyncEventSourceClient {
     AsyncClient *_client;
     AsyncEventSource *_server;
     uint32_t _lastId;
+#if defined(ESP32)
     std::mutex _messageQueue_mutex;
+#else
+    bool _messageQueue_processing;
+#endif // ESP32
     LinkedList<AsyncEventSourceMessage *> _messageQueue;
     void _queueMessage(AsyncEventSourceMessage *dataMessage);
     void _runQueue();

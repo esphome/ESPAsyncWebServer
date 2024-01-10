@@ -40,6 +40,8 @@
 
 #if ARDUINOJSON_VERSION_MAJOR == 5
   #define ARDUINOJSON_5_COMPATIBILITY
+#elif ARDUINOJSON_VERSION_MAJOR == 7
+  #define ARDUINOJSON_7_COMPATIBILITY
 #else
   #ifndef DYNAMIC_JSON_DOCUMENT_SIZE
     #define DYNAMIC_JSON_DOCUMENT_SIZE  1024
@@ -84,6 +86,8 @@ class AsyncJsonResponse: public AsyncAbstractResponse {
 
 #ifdef ARDUINOJSON_5_COMPATIBILITY
     DynamicJsonBuffer _jsonBuffer;
+#elif defined(ARDUINOJSON_7_COMPATIBILITY)
+    JsonDocument _jsonBuffer;
 #else
     DynamicJsonDocument _jsonBuffer;
 #endif
@@ -101,6 +105,15 @@ class AsyncJsonResponse: public AsyncAbstractResponse {
         _root = _jsonBuffer.createArray();
       else
         _root = _jsonBuffer.createObject();
+    }
+#elif defined(ARDUINOJSON_7_COMPATIBILITY)
+    AsyncJsonResponse(bool isArray=false) : _isValid{false} {
+      _code = 200;
+      _contentType = JSON_MIMETYPE;
+      if(isArray)
+        _root = _jsonBuffer.add<JsonArray>();
+      else
+        _root = _jsonBuffer.add<JsonObject>();
     }
 #else
     AsyncJsonResponse(bool isArray=false, size_t maxJsonBufferSize = DYNAMIC_JSON_DOCUMENT_SIZE) : _jsonBuffer(maxJsonBufferSize), _isValid{false} {
@@ -146,6 +159,8 @@ class PrettyAsyncJsonResponse: public AsyncJsonResponse {
 public:
 #ifdef ARDUINOJSON_5_COMPATIBILITY
 	PrettyAsyncJsonResponse (bool isArray=false) : AsyncJsonResponse{isArray} {}
+#elif defined(ARDUINOJSON_7_COMPATIBILITY)
+  PrettyAsyncJsonResponse (bool isArray=false) : AsyncJsonResponse{isArray} {}
 #else
 	PrettyAsyncJsonResponse (bool isArray=false, size_t maxJsonBufferSize = DYNAMIC_JSON_DOCUMENT_SIZE) : AsyncJsonResponse{isArray, maxJsonBufferSize} {}
 #endif
@@ -178,12 +193,15 @@ protected:
   WebRequestMethodComposite _method;
   ArJsonRequestHandlerFunction _onRequest;
   size_t _contentLength;
-#ifndef ARDUINOJSON_5_COMPATIBILITY   
+#if !defined(ARDUINOJSON_5_COMPATIBILITY) && !defined(ARDUINOJSON_7_COMPATIBILITY)
   const size_t maxJsonBufferSize;
 #endif
   size_t _maxContentLength;
 public:
 #ifdef ARDUINOJSON_5_COMPATIBILITY      
+  AsyncCallbackJsonWebHandler(const String& uri, ArJsonRequestHandlerFunction onRequest) 
+  : _uri(uri), _method(HTTP_POST|HTTP_PUT|HTTP_PATCH), _onRequest(onRequest), _maxContentLength(16384) {}
+#elif defined(ARDUINOJSON_7_COMPATIBILITY)
   AsyncCallbackJsonWebHandler(const String& uri, ArJsonRequestHandlerFunction onRequest) 
   : _uri(uri), _method(HTTP_POST|HTTP_PUT|HTTP_PATCH), _onRequest(onRequest), _maxContentLength(16384) {}
 #else
@@ -220,6 +238,11 @@ public:
         DynamicJsonBuffer jsonBuffer;
         JsonVariant json = jsonBuffer.parse((uint8_t*)(request->_tempObject));
         if (json.success()) {
+#elif defined(ARDUINOJSON_7_COMPATIBILITY)
+        JsonDocument jsonBuffer;
+        DeserializationError error = deserializeJson(jsonBuffer, (uint8_t*)(request->_tempObject));
+        if(!error) {
+          JsonVariant json = jsonBuffer.as<JsonVariant>();
 #else
         DynamicJsonDocument jsonBuffer(this->maxJsonBufferSize);
         DeserializationError error = deserializeJson(jsonBuffer, (uint8_t*)(request->_tempObject));

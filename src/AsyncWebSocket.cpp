@@ -492,6 +492,8 @@ AsyncWebSocketClient::~AsyncWebSocketClient(){
 }
 
 void AsyncWebSocketClient::_onAck(size_t len, uint32_t time){
+  AsyncWebLockGuard l(_lock);
+
   _lastMessageTime = millis();
   if(!_controlQueue.isEmpty()){
     auto head = _controlQueue.front();
@@ -514,6 +516,8 @@ void AsyncWebSocketClient::_onAck(size_t len, uint32_t time){
 }
 
 void AsyncWebSocketClient::_onPoll(){
+  AsyncWebLockGuard l(_lock);
+
   if(_client->canSend() && (!_controlQueue.isEmpty() || !_messageQueue.isEmpty())){
     _runQueue();
   } else if(_keepAlivePeriod > 0 && _controlQueue.isEmpty() && _messageQueue.isEmpty() && (millis() - _lastMessageTime) >= _keepAlivePeriod){
@@ -545,6 +549,9 @@ void AsyncWebSocketClient::_queueMessage(AsyncWebSocketMessage *dataMessage){
     delete dataMessage;
     return;
   }
+  
+  AsyncWebLockGuard l(_lock);
+
   if(_messageQueue.length() >= WS_MAX_QUEUED_MESSAGES){
       ets_printf("ERROR: Too many messages queued\n");
       delete dataMessage;
@@ -558,6 +565,7 @@ void AsyncWebSocketClient::_queueMessage(AsyncWebSocketMessage *dataMessage){
 void AsyncWebSocketClient::_queueControl(AsyncWebSocketControl *controlMessage){
   if(controlMessage == NULL)
     return;
+  AsyncWebLockGuard l(_lock);
   _controlQueue.add(controlMessage);
   if(_client->canSend())
     _runQueue();

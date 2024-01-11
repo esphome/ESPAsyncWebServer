@@ -164,6 +164,7 @@ class AsyncWebSocketClient {
     AsyncWebSocket *_server;
     uint32_t _clientId;
     AwsClientStatus _status;
+    AsyncWebLock _lock;
 
     LinkedList<AsyncWebSocketControl *> _controlQueue;
     LinkedList<AsyncWebSocketMessage *> _messageQueue;

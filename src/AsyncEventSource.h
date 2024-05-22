@@ -82,7 +82,7 @@ class AsyncEventSourceClient {
 #if defined(ESP32)
     std::mutex _messageQueue_mutex;
 #else
-    bool _messageQueue_processing;
+    bool _messageQueue_processing{false};
 #endif // ESP32
     LinkedList<AsyncEventSourceMessage *> _messageQueue;
     void _queueMessage(AsyncEventSourceMessage *dataMessage);

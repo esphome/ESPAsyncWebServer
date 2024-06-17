@@ -27,6 +27,15 @@
 #endif
 
 
+#if MBEDTLS_MAJOR_VERSION < 3
+// Compatibility with older versions of mbedTLS
+// https://github.com/Mbed-TLS/mbedtls/blob/development/docs/3.0-migration-guide.md
+#define mbedtls_md5_starts_ret mbedtls_md5_starts
+#define mbedtls_md5_update_ret mbedtls_md5_update
+#define mbedtls_md5_finish_ret mbedtls_md5_finish
+#endif
+
+
 // Basic Auth hash = base64("username:password")
 
 bool checkBasicAuthentication(const char * hash, const char * username, const char * password){

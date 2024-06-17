@@ -186,7 +186,7 @@ void AsyncEventSourceClient::_queueMessage(AsyncEventSourceMessage *dataMessage)
     return;
   }
   if(_messageQueue.length() >= SSE_MAX_QUEUED_MESSAGES){
-      ets_printf("ERROR: Too many messages queued\n");
+      ESP_LOGE("ESPAsyncWebServer", "AsyncEventSource: Too many messages queued");
       delete dataMessage;
   } else {
       _messageQueue.add(dataMessage);

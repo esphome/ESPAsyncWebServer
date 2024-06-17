@@ -546,7 +546,7 @@ void AsyncWebSocketClient::_queueMessage(AsyncWebSocketMessage *dataMessage){
     return;
   }
   if(_messageQueue.length() >= WS_MAX_QUEUED_MESSAGES){
-      ets_printf("ERROR: Too many messages queued\n");
+      ESP_LOGE("ESPAsyncWebServer", "AsyncWebSocket: Too many messages queued");
       delete dataMessage;
   } else {
       _messageQueue.add(dataMessage);

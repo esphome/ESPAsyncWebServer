@@ -209,6 +209,9 @@ class AsyncWebSocketClient {
     //data packets
     void message(AsyncWebSocketMessage *message){ _queueMessage(message); }
     bool queueIsFull();
+    size_t queueLength() { //added by ewowi
+      return _messageQueue.length();
+    }
 
     size_t printf(const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
 #ifndef ESP32

@@ -69,6 +69,8 @@ class AsyncEventSourceMessage {
     AsyncEventSourceMessage(const char * data, size_t len);
     ~AsyncEventSourceMessage();
     size_t ack(size_t len, uint32_t time __attribute__((unused)));
+    size_t ack(size_t len);
+    size_t write_buffer(AsyncClient *client);
     size_t send(AsyncClient *client);
     bool finished(){ return _acked == _len; }
     bool sent() { return _sent == _len; }

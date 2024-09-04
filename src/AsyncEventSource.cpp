@@ -144,7 +144,7 @@ size_t AsyncEventSourceMessage::ack(size_t len) {
 size_t AsyncEventSourceMessage::write_buffer(AsyncClient *client) {
   if (!client->canSend() || client->space() <= 0)
     return 0;
-  const size_t len = _len - _sent;
+  size_t len = _len - _sent;
   if(client->space() < len){
     len = client->space();
   }

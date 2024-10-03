@@ -86,6 +86,7 @@ class AsyncEventSourceClient {
 #endif // ESP32
     LinkedList<AsyncEventSourceMessage *> _messageQueue;
     void _queueMessage(AsyncEventSourceMessage *dataMessage);
+    bool _tryQueueMessage(AsyncEventSourceMessage *dataMessage);
     void _runQueue();
 
   public:
@@ -96,6 +97,7 @@ class AsyncEventSourceClient {
     AsyncClient* client(){ return _client; }
     void close();
     void write(const char * message, size_t len);
+    bool try_write(const char * message, size_t len);
     void send(const char *message, const char *event=NULL, uint32_t id=0, uint32_t reconnect=0);
     bool connected() const { return (_client != NULL) && _client->connected(); }
     uint32_t lastId() const { return _lastId; }
@@ -121,6 +123,7 @@ class AsyncEventSource: public AsyncWebHandler {
     void close();
     void onConnect(ArEventHandlerFunction cb);
     void send(const char *message, const char *event=NULL, uint32_t id=0, uint32_t reconnect=0);
+    bool try_send(const char *message, const char *event=NULL, uint32_t id=0, uint32_t reconnect=0);
     size_t count() const; //number clinets connected
     size_t  avgPacketsWaiting() const;
 

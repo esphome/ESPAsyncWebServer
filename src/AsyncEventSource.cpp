@@ -179,20 +179,28 @@ AsyncEventSourceClient::~AsyncEventSourceClient(){
 }
 
 void AsyncEventSourceClient::_queueMessage(AsyncEventSourceMessage *dataMessage){
+  if(!_tryQueueMessage(dataMessage)){
+      ets_printf("ERROR: Too many messages queued\n");
+  }
+}
+
+bool AsyncEventSourceClient::_tryQueueMessage(AsyncEventSourceMessage *dataMessage){
   if(dataMessage == NULL)
-    return;
+    return true;
   if(!connected()){
     delete dataMessage;
-    return;
+    return true;
   }
+  bool ret = true;
   if(_messageQueue.length() >= SSE_MAX_QUEUED_MESSAGES){
-      ets_printf("ERROR: Too many messages queued\n");
       delete dataMessage;
+      ret = false;
   } else {
       _messageQueue.add(dataMessage);
   }
   if(_client->canSend())
     _runQueue();
+  return ret;
 }
 
 void AsyncEventSourceClient::_onAck(size_t len, uint32_t time){
@@ -227,7 +235,11 @@ void AsyncEventSourceClient::close(){
 }
 
 void AsyncEventSourceClient::write(const char * message, size_t len){
-  _queueMessage(new AsyncEventSourceMessage(message, len));
+  try_write(message, len);
+}
+
+bool AsyncEventSourceClient::try_write(const char * message, size_t len){
+  return _tryQueueMessage(new AsyncEventSourceMessage(message, len));
 }
 
 void AsyncEventSourceClient::send(const char *message, const char *event, uint32_t id, uint32_t reconnect){
@@ -330,14 +342,19 @@ size_t AsyncEventSource::avgPacketsWaiting() const {
 }
 
 void AsyncEventSource::send(const char *message, const char *event, uint32_t id, uint32_t reconnect){
+  try_send(message, event, id, reconnect);
+}
 
-
+bool AsyncEventSource::try_send(const char *message, const char *event, uint32_t id, uint32_t reconnect){
   String ev = generateEventMessage(message, event, id, reconnect);
+  bool succeeded = false;
   for(const auto &c: _clients){
     if(c->connected()) {
-      c->write(ev.c_str(), ev.length());
+      if(c->try_write(ev.c_str(), ev.length()))
+        succeeded = true;
     }
   }
+  return succeeded;
 }
 
 size_t AsyncEventSource::count() const {

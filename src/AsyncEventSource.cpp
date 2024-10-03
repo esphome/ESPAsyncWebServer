@@ -283,6 +283,7 @@ AsyncEventSource::AsyncEventSource(const String& url)
   : _url(url)
   , _clients(LinkedList<AsyncEventSourceClient *>([](AsyncEventSourceClient *c){ delete c; }))
   , _connectcb(NULL)
+  , _disconnectcb(NULL)
 {}
 
 AsyncEventSource::~AsyncEventSource(){
@@ -291,6 +292,10 @@ AsyncEventSource::~AsyncEventSource(){
 
 void AsyncEventSource::onConnect(ArEventHandlerFunction cb){
   _connectcb = cb;
+}
+
+void AsyncEventSource::onDisconnect(ArEventHandlerFunction2 cb){
+  _disconnectcb = cb;
 }
 
 void AsyncEventSource::_addClient(AsyncEventSourceClient * client){
@@ -314,6 +319,8 @@ void AsyncEventSource::_addClient(AsyncEventSourceClient * client){
 
 void AsyncEventSource::_handleDisconnect(AsyncEventSourceClient * client){
   _clients.remove(client);
+  if(_disconnectcb)
+    _disconnectcb(this);
 }
 
 void AsyncEventSource::close(){

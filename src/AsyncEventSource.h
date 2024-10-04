@@ -33,7 +33,7 @@
 #endif // ESP32
 
 #ifndef SSE_MAX_QUEUED_MESSAGES
-#define SSE_MAX_QUEUED_MESSAGES 32
+#define SSE_MAX_QUEUED_MESSAGES 16
 #endif
 
 #include <ESPAsyncWebServer.h>

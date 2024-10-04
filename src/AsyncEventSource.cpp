@@ -295,7 +295,7 @@ void AsyncEventSource::onConnect(ArEventHandlerFunction cb){
   _connectcb = cb;
 }
 
-void AsyncEventSource::onConnect2(ArEventHandlerFunction2 cb){
+void AsyncEventSource::onConnect(ArEventHandlerFunction2 cb){
   _connectcb2 = cb;
 }
 

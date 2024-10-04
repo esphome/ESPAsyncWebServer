@@ -125,7 +125,7 @@ class AsyncEventSource: public AsyncWebHandler {
     const char * url() const { return _url.c_str(); }
     void close();
     void onConnect(ArEventHandlerFunction cb);
-    void onConnect2(ArEventHandlerFunction2 cb);
+    void onConnect(ArEventHandlerFunction2 cb);
     void onDisconnect(ArEventHandlerFunction2 cb);
     void send(const char *message, const char *event=NULL, uint32_t id=0, uint32_t reconnect=0);
     bool try_send(const char *message, const char *event=NULL, uint32_t id=0, uint32_t reconnect=0);

@@ -24,6 +24,8 @@
 #include <Arduino.h>
 #if defined(ESP32) || defined(LIBRETINY)
 #include <AsyncTCP.h>
+#elif defined(USE_RP2040)
+#include <AsyncTCP_RP2040W.h>
 #else
 #include <ESPAsyncTCP.h>
 #endif

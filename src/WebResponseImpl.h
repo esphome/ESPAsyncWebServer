@@ -26,6 +26,7 @@
 #undef min
 #undef max
 #endif
+#include <any>
 #include <vector>
 // It is possible to restore these defines, but one can use _min and _max instead. Or std::min, std::max.
 
@@ -104,6 +105,16 @@ class AsyncChunkedResponse: public AsyncAbstractResponse {
     size_t _filledLength;
   public:
     AsyncChunkedResponse(const String& contentType, AwsResponseFiller callback, AwsTemplateProcessor templateCallback=nullptr);
+    bool _sourceValid() const { return !!(_content); }
+    virtual size_t _fillBuffer(uint8_t *buf, size_t maxLen) override;
+};
+
+class AsyncUserDataResponse: public AsyncAbstractResponse {
+  private:
+    AwsUserDataFiller _content;
+    std::any _userData;
+  public:
+    AsyncUserDataResponse(const String& contentType, AwsUserDataFiller callback);
     bool _sourceValid() const { return !!(_content); }
     virtual size_t _fillBuffer(uint8_t *buf, size_t maxLen) override;
 };

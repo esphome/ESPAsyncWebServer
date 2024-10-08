@@ -124,7 +124,11 @@ AsyncEventSourceMessage::~AsyncEventSourceMessage() {
 }
 
 size_t AsyncEventSourceMessage::ack(size_t len, uint32_t time) {
-  (void)time;
+    (void)time;
+    return ack(len);
+}
+
+size_t AsyncEventSourceMessage::ack(size_t len) {
   // If the whole message is now acked...
   if(_acked + len > _len){
      // Return the number of extra bytes acked (they will be carried on to the next message)
@@ -137,16 +141,21 @@ size_t AsyncEventSourceMessage::ack(size_t len, uint32_t time) {
   return 0;
 }
 
-size_t AsyncEventSourceMessage::send(AsyncClient *client) {
-  if (!client->canSend())
+size_t AsyncEventSourceMessage::write_buffer(AsyncClient *client) {
+  if (!client->canSend() || client->space() <= 0)
     return 0;
-  const size_t len = _len - _sent;
+  size_t len = _len - _sent;
   if(client->space() < len){
-    return 0;
+    len = client->space();
   }
-  size_t sent = client->add((const char *)_data, len);
-  client->send();
+  size_t sent = client->add((const char *)_data + _sent, len);
   _sent += sent;
+  return sent;
+}
+
+size_t AsyncEventSourceMessage::send(AsyncClient *client) {
+  size_t sent = write_buffer(client);
+  client->send();
   return sent;
 }
 
@@ -171,6 +180,8 @@ AsyncEventSourceClient::AsyncEventSourceClient(AsyncWebServerRequest *request, A
 
   _server->_addClient(this);
   delete request;
+
+  _client->setNoDelay(true);
 }
 
 AsyncEventSourceClient::~AsyncEventSourceClient(){
@@ -180,7 +191,7 @@ AsyncEventSourceClient::~AsyncEventSourceClient(){
 
 void AsyncEventSourceClient::_queueMessage(AsyncEventSourceMessage *dataMessage){
   if(!_tryQueueMessage(dataMessage)){
-      ets_printf("ERROR: Too many messages queued\n");
+      ets_printf("AsyncEventSourceClient: ERROR: Queue is full, communications too slow, dropping event");
   }
 }
 
@@ -204,12 +215,6 @@ bool AsyncEventSourceClient::_tryQueueMessage(AsyncEventSourceMessage *dataMessa
 }
 
 void AsyncEventSourceClient::_onAck(size_t len, uint32_t time){
-  while(len && !_messageQueue.isEmpty()){
-    len = _messageQueue.front()->ack(len, time);
-    if(_messageQueue.front()->finished())
-      _messageQueue.remove(_messageQueue.front());
-  }
-
   _runQueue();
 }
 
@@ -259,14 +264,25 @@ void AsyncEventSourceClient::_runQueue(){
   this->_messageQueue_processing = true;
 #endif // ESP32
 
-  while(!_messageQueue.isEmpty() && _messageQueue.front()->finished()){
-    _messageQueue.remove(_messageQueue.front());
-  }
-
+  size_t total_bytes_written = 0;
   for(auto i = _messageQueue.begin(); i != _messageQueue.end(); ++i)
   {
-    if(!(*i)->sent())
-      (*i)->send(_client);
+    if(!(*i)->sent()) {
+      size_t bytes_written = (*i)->write_buffer(_client);
+      total_bytes_written += bytes_written;
+      if(bytes_written == 0)
+        break;
+    }
+  }
+  if(total_bytes_written > 0)
+    _client->send();
+
+  size_t len = total_bytes_written;
+  while(len && !_messageQueue.isEmpty()){
+    len = _messageQueue.front()->ack(len);
+    if(_messageQueue.front()->finished()){
+      _messageQueue.remove(_messageQueue.front());
+    }
   }
 
 #if defined(ESP32)

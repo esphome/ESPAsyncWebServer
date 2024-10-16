@@ -27,6 +27,12 @@
 #ifndef WS_MAX_QUEUED_MESSAGES
 #define WS_MAX_QUEUED_MESSAGES 32
 #endif
+#elif defined(USE_RP2040)
+#include <AsyncTCP_RP2040W.h>
+#ifndef WS_MAX_QUEUED_MESSAGES
+#define WS_MAX_QUEUED_MESSAGES 8
+#endif
+#define ets_printf(msg) void()
 #else
 #include <ESPAsyncTCP.h>
 #ifndef WS_MAX_QUEUED_MESSAGES

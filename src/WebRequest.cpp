@@ -756,6 +756,10 @@ AsyncWebServerResponse * AsyncWebServerRequest::beginChunkedResponse(const Strin
   return new AsyncCallbackResponse(contentType, 0, callback, templateCallback);
 }
 
+AsyncWebServerResponse * AsyncWebServerRequest::beginUserDataResponse(const String& contentType, AwsUserDataFiller callback){
+  return new AsyncUserDataResponse(contentType, callback);
+}
+
 AsyncResponseStream * AsyncWebServerRequest::beginResponseStream(const String& contentType, size_t bufferSize){
   return new AsyncResponseStream(contentType, bufferSize);
 }

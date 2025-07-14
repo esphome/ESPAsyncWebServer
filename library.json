@@ -23,8 +23,8 @@
   ],
   "dependencies": [
     {
-      "owner": "esphome",
-      "name": "AsyncTCP-esphome",
+      "owner": "ESP32Async",
+      "name": "AsyncTCP",
       "version": "^3.4.5",
       "platforms": [
         "espressif32",
@@ -32,8 +32,8 @@
       ]
     },
     {
-      "owner": "esphome",
-      "name": "ESPAsyncTCP-esphome",
+      "owner": "ESP32Async",
+      "name": "ESPAsyncTCP",
       "version": "^2.0.0",
       "platforms": "espressif8266"
     },

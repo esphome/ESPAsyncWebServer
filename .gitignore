@@ -1,4 +1,6 @@
-.vscode
 .DS_Store
 /dist/
-
+.lh
+/.pio
+/.vscode
+/logs

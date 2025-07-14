@@ -1,47 +1,60 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
+// Copyright 2016-2025 Hristo Gochkov, Mathieu Carbou, Emil Muratov
+
 #include <DNSServer.h>
-#ifdef ESP32
-#include <WiFi.h>
+#if defined(ESP32) || defined(LIBRETINY)
 #include <AsyncTCP.h>
+#include <WiFi.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
+#elif defined(TARGET_RP2040) || defined(TARGET_RP2350) || defined(PICO_RP2040) || defined(PICO_RP2350)
+#include <RPAsyncTCP.h>
+#include <WiFi.h>
 #endif
 #include "ESPAsyncWebServer.h"
 
-DNSServer dnsServer;
-AsyncWebServer server(80);
+static DNSServer dnsServer;
+static AsyncWebServer server(80);
 
 class CaptiveRequestHandler : public AsyncWebHandler {
 public:
-  CaptiveRequestHandler() {}
-  virtual ~CaptiveRequestHandler() {}
-
-  bool canHandle(AsyncWebServerRequest *request){
-    //request->addInterestingHeader("ANY");
+  bool canHandle(__unused AsyncWebServerRequest *request) const override {
     return true;
   }
 
   void handleRequest(AsyncWebServerRequest *request) {
     AsyncResponseStream *response = request->beginResponseStream("text/html");
     response->print("<!DOCTYPE html><html><head><title>Captive Portal</title></head><body>");
-    response->print("<p>This is out captive portal front page.</p>");
+    response->print("<p>This is our captive portal front page.</p>");
     response->printf("<p>You were trying to reach: http://%s%s</p>", request->host().c_str(), request->url().c_str());
+#if SOC_WIFI_SUPPORTED || CONFIG_ESP_WIFI_REMOTE_ENABLED || LT_ARD_HAS_WIFI
     response->printf("<p>Try opening <a href='http://%s'>this link</a> instead</p>", WiFi.softAPIP().toString().c_str());
+#endif
     response->print("</body></html>");
     request->send(response);
   }
 };
 
+void setup() {
+  Serial.begin(115200);
+  Serial.println();
+  Serial.println("Configuring access point...");
 
-void setup(){
-  //your other setup stuff...
-  WiFi.softAP("esp-captive");
+#if SOC_WIFI_SUPPORTED || CONFIG_ESP_WIFI_REMOTE_ENABLED || LT_ARD_HAS_WIFI
+  if (!WiFi.softAP("esp-captive")) {
+    Serial.println("Soft AP creation failed.");
+    while (1);
+  }
+
   dnsServer.start(53, "*", WiFi.softAPIP());
-  server.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);//only when requested from AP
-  //more handlers...
+#endif
+
+  server.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);  // only when requested from AP
+  // more handlers...
   server.begin();
 }
 
-void loop(){
+void loop() {
   dnsServer.processNextRequest();
 }

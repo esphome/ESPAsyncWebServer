@@ -638,6 +638,23 @@ size_t AsyncChunkedResponse::_fillBuffer(uint8_t *data, size_t len){
 }
 
 /*
+ * User Data Response
+ * */
+
+AsyncUserDataResponse::AsyncUserDataResponse(const String& contentType, AwsUserDataFiller callback): AsyncAbstractResponse() {
+  _code = 200;
+  _content = callback;
+  _contentLength = 0;
+  _contentType = contentType;
+  _sendContentLength = false;
+  _chunked = true;
+}
+
+size_t AsyncUserDataResponse::_fillBuffer(uint8_t *data, size_t len){
+  return _content(data, len, _userData);
+}
+
+/*
  * Progmem Response
  * */
 
